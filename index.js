@@ -8,6 +8,10 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Connect to database
+const connectDb = require("./database/db")
+connectDb()
+
 const port = process.env.PORT || 4000
 app.listen(port, (req, res) => {
     console.log(`Server is listen on http://localhost:${port}`)
