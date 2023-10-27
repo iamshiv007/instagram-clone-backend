@@ -3,9 +3,11 @@ const bodyParser = require("body-parser")
 const fileUpload = require("express-fileupload")
 const cookieParser = require('cookie-parser');
 const cloudinary = require("cloudinary").v2
+const { createServer } = require("http")
 require("dotenv").config()
 
 const app = express();
+const server = createServer(app)
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -42,3 +44,6 @@ app.get("/", (req, res) => {
 // error middleware
 const errorMiddleware = require("./middlewares/error")
 app.use(errorMiddleware);
+
+const socketSetup = require("./socket")
+socketSetup(server)
