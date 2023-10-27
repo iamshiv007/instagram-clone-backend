@@ -4,7 +4,7 @@ const sendCookie = require('../utils/sendCookie');
 const ErrorHandler = require('../utils/errorHandler');
 const sendMail = require('../utils/sendMail');
 const crypto = require('crypto');
-// const cloudinary = require("cloudinary  ")
+// const cloudinary = require("cloudinary")
 
 // Signup User
 const signupUser = asyncHandler(async (req, res, next) => {
@@ -87,6 +87,43 @@ const getAccountDetails = asyncHandler(async (req, res, next) => {
     });
 });
 
+// Get User Details
+const getUserDetails = asyncHandler(async (req, res, next) => {
+
+    const user = await User.findOne({ username: req.params.username }).populate("followers following").populate({
+        path: 'posts',
+        populate: {
+            path: 'comments',
+            populate: {
+                path: 'user'
+            }
+        },
+    }).populate({
+        path: 'posts',
+        populate: {
+            path: 'postedBy'
+        }
+    }).populate({
+        path: 'saved',
+        populate: {
+            path: 'comments',
+            populate: {
+                path: 'user'
+            }
+        },
+    }).populate({
+        path: 'saved',
+        populate: {
+            path: 'postedBy'
+        }
+    })
+
+    res.status(200).json({
+        success: true,
+        user,
+    });
+});
+
 // Get User Details By Id
 const getUserDetailsById = asyncHandler(async (req, res, next) => {
 
@@ -95,6 +132,19 @@ const getUserDetailsById = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
         user,
+    });
+});
+
+// Get All Users
+const getAllUsers = asyncHandler(async (req, res, next) => {
+
+    const users = await User.find();
+
+    const suggestedUsers = users.filter((u) => !u.followers.includes(req.user._id) && u._id.toString() !== req.user._id.toString()).slice(-5)
+
+    res.status(200).json({
+        success: true,
+        users: suggestedUsers,
     });
 });
 
@@ -141,8 +191,6 @@ const updateProfile = asyncHandler(async (req, res, next) => {
 
     //     const imageId = user.avatar.public_id
 
-    //     await cloudinary.v2.uploader.destroy(imageId)
-
     //     const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
     //         folder: "avatars",
     //         width: 150,
@@ -164,6 +212,89 @@ const updateProfile = asyncHandler(async (req, res, next) => {
     res.status(200).json({
         success: true,
     });
+});
+
+// Delete Profile ⚠️⚠️
+const deleteProfile = asyncHandler(async (req, res, next) => {
+
+    const user = await User.findById(req.user._id);
+    const posts = user.posts;
+    const followers = user.followers;
+    const following = user.following;
+    const userId = user._id;
+
+    // delete post & user images ⚠️⚠️
+
+    await user.remove();
+
+    res.cookie('token', null, {
+        expires: new Date(Date.now()),
+        httpOnly: true,
+    });
+
+    for (let i = 0; i < posts.length; i++) {
+        const post = await Post.findById(posts[i]);
+        await post.remove();
+    }
+
+    for (let i = 0; i < followers.length; i++) {
+        const follower = await User.findById(followers[i]);
+
+        const index = follower.following.indexOf(userId);
+        follower.following.splice(index, 1);
+        await follower.save();
+    }
+
+    for (let i = 0; i < following.length; i++) {
+        const follows = await User.findById(following[i]);
+
+        const index = follows.followers.indexOf(userId);
+        follows.followers.splice(index, 1);
+        await follows.save();
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Profile Deleted"
+    });
+});
+
+// Follow | Unfollow User
+const followUser = asyncHandler(async (req, res, next) => {
+
+    const userToFollow = await User.findById(req.params.id);
+    const loggedInUser = await User.findById(req.user._id);
+
+    if (!userToFollow) {
+        return next(new ErrorHandler("User Not Found", 404));
+    }
+
+    if (loggedInUser.following.includes(userToFollow._id)) {
+
+        const followingIndex = loggedInUser.following.indexOf(userToFollow._id);
+        const followerIndex = userToFollow.followers.indexOf(loggedInUser._id);
+
+        loggedInUser.following.splice(followingIndex, 1);
+        userToFollow.followers.splice(followerIndex, 1);
+
+        await loggedInUser.save();
+        await userToFollow.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "User Unfollowed"
+        });
+    } else {
+        loggedInUser.following.push(userToFollow._id);
+        userToFollow.followers.push(loggedInUser._id);
+        await loggedInUser.save();
+        await userToFollow.save();
+
+        res.status(200).json({
+            success: true,
+            message: "User Followed",
+        });
+    }
 });
 
 // Forgot Password
@@ -224,6 +355,34 @@ const resetPassword = asyncHandler(async (req, res, next) => {
     sendCookie(user, 200, res);
 });
 
+// User Search
+const searchUsers = asyncHandler(async (req, res, next) => {
+
+    if (req.query.keyword) {
+        const users = await User.find({
+            $or: [
+                {
+                    name: {
+                        $regex: req.query.keyword,
+                        $options: "i",
+                    },
+                },
+                {
+                    username: {
+                        $regex: req.query.keyword,
+                        $options: "i",
+                    }
+                }
+            ]
+        });
+
+        res.status(200).json({
+            success: true,
+            users,
+        });
+    }
+});
+
 module.exports = {
-    signupUser, loginUser, logoutUser, getAccountDetails, getUserDetailsById, updatePassword, updateProfile, forgotPassword, resetPassword
+    signupUser, loginUser, logoutUser, getAccountDetails, getUserDetails, getUserDetailsById, getAllUsers, updatePassword, updateProfile, deleteProfile, followUser, forgotPassword, resetPassword, searchUsers
 }

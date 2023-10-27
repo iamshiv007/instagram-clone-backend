@@ -78,8 +78,6 @@ const deletePost = asyncHandler(async (req, res, next) => {
         return next(new ErrorHandler("Unauthorized", 401));
     }
 
-    // await cloudinary.v2.uploader.destroy(product.image.public_id)
-
     await post.remove();
 
     const user = await User.findById(req.user._id);
