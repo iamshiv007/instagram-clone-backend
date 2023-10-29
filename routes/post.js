@@ -6,7 +6,7 @@ const router = require("express").Router()
 router.post("/new", isAuthenticated, newPost)
 router.post("/comment/:id", isAuthenticated, newComment)
 
-router.get("/following/posts", isAuthenticated, getPostsOfFollowing)
+router.get("/following", isAuthenticated, getPostsOfFollowing)
 router.get("/all", allPosts)
 
 router.get("/details/:id", isAuthenticated, getPostDetails)

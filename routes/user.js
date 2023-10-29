@@ -3,8 +3,8 @@ const { isAuthenticated } = require("../middlewares/auth")
 
 const router = require("express").Router()
 
+router.post("/signup", signupUser)
 router.post("/login", loginUser)
-router.post("/register", signupUser)
 router.get("/logout", logoutUser)
 
 router.route("/me")

@@ -4,7 +4,7 @@ const sendCookie = require('../utils/sendCookie');
 const ErrorHandler = require('../utils/errorHandler');
 const sendMail = require('../utils/sendMail');
 const crypto = require('crypto');
-// const cloudinary = require("cloudinary")
+const cloudinary = require("cloudinary")
 
 // Signup User
 const signupUser = asyncHandler(async (req, res, next) => {
@@ -21,11 +21,11 @@ const signupUser = asyncHandler(async (req, res, next) => {
         return next(new ErrorHandler("Email already exists", 401));
     }
 
-    // const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
-    //     folder: "Avatars",
-    //     width: 150,
-    //     crop: "scale"
-    // })
+    const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+        folder: "Avatars",
+        width: 150,
+        crop: "scale"
+    })
 
     const newUser = await User.create({
         name,
@@ -33,8 +33,8 @@ const signupUser = asyncHandler(async (req, res, next) => {
         username,
         password,
         avatar: {
-            public_id: "myCloud.public_id",
-            url: "myCloud.secure_url"
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url
         }
     })
 
@@ -90,7 +90,7 @@ const getAccountDetails = asyncHandler(async (req, res, next) => {
 // Get User Details
 const getUserDetails = asyncHandler(async (req, res, next) => {
 
-    const user = await User.findOne({ username: req.params.username }).populate("followers following").populate({
+    const user = await User.findOne({ username: req.params.userName }).populate("followers following").populate({
         path: 'posts',
         populate: {
             path: 'comments',
@@ -186,22 +186,18 @@ const updateProfile = asyncHandler(async (req, res, next) => {
         return next(new ErrorHandler("User Already Exists", 404));
     }
 
-    // if (req.body.avatar !== "") {
-    //     const user = await User.findById(req.user.id)
+    if (req.body.avatar !== "") {
+        const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
+            folder: "avatars",
+            width: 150,
+            crop: 'scale'
+        })
 
-    //     const imageId = user.avatar.public_id
-
-    //     const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
-    //         folder: "avatars",
-    //         width: 150,
-    //         crop: 'scale'
-    //     })
-
-    //     newUserData.avatar = {
-    //         public_id: myCloud.public_id,
-    //         url: myCloud.secure_url
-    //     }
-    // }
+        newUserData.avatar = {
+            public_id: myCloud.public_id,
+            url: myCloud.secure_url
+        }
+    }
 
     await User.findByIdAndUpdate(req.user._id, newUserData, {
         new: true,
