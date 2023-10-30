@@ -2,22 +2,20 @@ const Post = require('../models/post');
 const User = require('../models/user');
 const asyncHandler = require('../middlewares/asyncHandler');
 const ErrorHandler = require('../utils/errorHandler');
-// const cloudinary = require("cloudinary")
+const cloudinary = require("cloudinary");
 
 // Create New Post
 const newPost = asyncHandler(async (req, res, next) => {
-    const myCloud = cloudinary.v2.uploader.upload(req.body.post, {
+    const myCloud = await cloudinary.v2.uploader.upload(req.body.post, {
         folder: "posts",
-        width: 150,
-        crop: "scale",
-        q_auto: true
-    })
+        crop: "scale"
+    });
 
     const postData = {
         caption: req.body.caption,
         image: {
-            public_id: "myCloud.public_id",
-            url: "myCloud.secure_url"
+            public_id: myCloud.public_id,
+            url: myCloud.url
         },
         postedBy: req.user._id
     }

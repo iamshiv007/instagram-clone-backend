@@ -23,7 +23,6 @@ const signupUser = asyncHandler(async (req, res, next) => {
 
     const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
         folder: "Avatars",
-        width: 150,
         crop: "scale"
     })
 
@@ -189,7 +188,6 @@ const updateProfile = asyncHandler(async (req, res, next) => {
     if (req.body.avatar !== "") {
         const myCloud = await cloudinary.v2.uploader.upload(req.body.avatar, {
             folder: "avatars",
-            width: 150,
             crop: 'scale'
         })
 
