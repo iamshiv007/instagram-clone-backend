@@ -35,7 +35,7 @@ connectDb()
 
 // Server listen
 const port = process.env.PORT || 4000
-app.listen(port, (req, res) => {
+server.listen(port, (req, res) => {
     console.log(`Server is listen on http://localhost:${port}`)
 })
 

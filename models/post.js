@@ -6,13 +6,13 @@ const postSchema = new mongoose.Schema({
         trim: true
     },
     image: {
-        public_id:{
+        public_id: {
             type: String,
-            required:true
+            required: true
         },
-        url:{
-            type:String,
-            required:true
+        url: {
+            type: String,
+            required: true
         }
     },
     postedBy: {
@@ -48,6 +48,8 @@ const postSchema = new mongoose.Schema({
         type: Date,
         default: Date.now,
     }
-});
+},
+    { timestamps: true }
+    );
 
 module.exports = mongoose.model("Post", postSchema);
